@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NexaConsult — AI Business Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #08090d;
+    --bg2: #0f1018;
+    --bg3: #161820;
+    --card: #1a1c26;
+    --border: #2a2d3e;
+    --gold: #c9a84c;
+    --gold2: #e8c97a;
+    --gold-dim: rgba(201,168,76,0.12);
+    --text: #e8e6df;
+    --text-dim: #8a8a9a;
+    --text-muted: #4a4a5a;
+    --accent: #4f8ef7;
+    --green: #4ecb8d;
+    --red: #e05a5a;
+    --radius: 12px;
+    --radius-sm: 7px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow: hidden; }
+
+  /* LAYOUT */
+  .shell { display: flex; height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 260px; flex-shrink: 0;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 0;
+  }
+  .brand {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--gold2);
+  }
+  .brand-logo span { color: var(--text-dim); font-weight: 400; }
+  .brand-sub {
+    font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--text-muted); margin-top: 4px;
+  }
+
+  .nav { padding: 16px 12px; flex: 1; }
+  .nav-label {
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-muted); padding: 0 10px; margin-bottom: 8px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 12px; border-radius: var(--radius-sm);
+    cursor: pointer; margin-bottom: 2px;
+    transition: all 0.18s ease; position: relative;
+    font-size: 13.5px; font-weight: 400; color: var(--text-dim);
+    border: 1px solid transparent;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active {
+    background: var(--gold-dim); color: var(--gold2);
+    border-color: rgba(201,168,76,0.25);
+    font-weight: 500;
+  }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+  .nav-item .badge {
+    margin-left: auto; font-size: 9px; background: var(--gold);
+    color: #000; padding: 2px 6px; border-radius: 20px; font-weight: 600;
+  }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    font-size: 11px; color: var(--text-muted);
+    line-height: 1.6;
+  }
+  .sidebar-footer a { color: var(--gold); text-decoration: none; }
+
+  /* MAIN */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .topbar {
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg2);
+  }
+  .topbar-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-weight: 600; color: var(--text);
+  }
+  .topbar-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .status-dot {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 12px; color: var(--green);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  .content { flex: 1; display: flex; overflow: hidden; }
+
+  /* PANELS */
+  .panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .panel.active { display: flex; }
+
+  .input-zone {
+    padding: 28px 32px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+  }
+  .field-row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 180px; }
+  .field label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+  .field input, .field select, .field textarea {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 13.5px;
+    padding: 10px 14px; outline: none; transition: border-color 0.18s;
+    resize: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--gold); }
+  .field textarea { min-height: 80px; }
+  .field select option { background: var(--bg3); }
+
+  .run-btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    background: var(--gold); color: #000;
+    border: none; border-radius: var(--radius-sm);
+    padding: 11px 24px; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.18s; letter-spacing: 0.3px;
+  }
+  .run-btn:hover { background: var(--gold2); transform: translateY(-1px); }
+  .run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .run-btn .spin { display: inline-block; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* OUTPUT */
+  .output-zone {
+    flex: 1; overflow-y: auto; padding: 28px 32px;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+  .output-zone::-webkit-scrollbar { width: 5px; }
+  .output-zone::-webkit-scrollbar-track { background: transparent; }
+  .output-zone::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .output-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; color: var(--text-muted); gap: 12px; text-align: center;
+  }
+  .output-empty .big-icon { font-size: 48px; opacity: 0.25; }
+  .output-empty p { font-size: 13px; max-width: 280px; line-height: 1.6; }
+
+  .output-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 28px 28px 24px;
+    animation: fadeUp 0.3s ease;
+  }
+  @keyframes fadeUp { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: none; } }
+
+  .output-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px; padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .output-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 600; color: var(--gold2);
+  }
+  .output-meta { font-size: 11px; color: var(--text-muted); }
+
+  .copy-btn {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text-dim);
+    padding: 6px 14px; font-size: 12px; cursor: pointer;
+    transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+  }
+  .copy-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  .output-body {
+    font-size: 13.5px; line-height: 1.8; color: var(--text);
+    white-space: pre-wrap; font-family: 'DM Sans', sans-serif;
+  }
+  .output-body h1, .output-body h2, .output-body h3 {
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--gold2); margin: 18px 0 8px;
+  }
+  .output-body h1 { font-size: 22px; }
+  .output-body h2 { font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  .output-body h3 { font-size: 15px; color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 600; }
+  .output-body strong { color: var(--gold); }
+  .output-body ul, .output-body ol { padding-left: 20px; margin: 6px 0 12px; }
+  .output-body li { margin-bottom: 4px; }
+  .output-body code {
+    background: var(--bg3); padding: 2px 7px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--accent);
+  }
+  .output-body hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  .cursor { display: inline-block; width: 2px; height: 14px; background: var(--gold); margin-left: 2px; animation: blink 0.7s infinite; vertical-align: middle; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* History chips */
+  .history-bar {
+    padding: 10px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex; gap: 8px; overflow-x: auto;
+    scrollbar-width: none; min-height: 42px; align-items: center;
+    background: var(--bg);
+  }
+  .history-bar::-webkit-scrollbar { display: none; }
+  .history-chip {
+    flex-shrink: 0; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 20px; padding: 4px 12px; font-size: 11px; color: var(--text-dim);
+    cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .history-chip:hover { border-color: var(--gold); color: var(--gold); }
+  .history-label { font-size: 10px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; flex-shrink: 0; }
+
+  /* Tags in output */
+  .tag {
+    display: inline-block; font-size: 10px; letter-spacing: 1px;
+    text-transform: uppercase; padding: 3px 9px; border-radius: 20px;
+    border: 1px solid; margin-right: 6px; font-weight: 500;
+  }
+  .tag-pain { color: var(--red); border-color: var(--red); background: rgba(224,90,90,0.08); }
+  .tag-opp { color: var(--green); border-color: var(--green); background: rgba(78,203,141,0.08); }
+  .tag-advisory { color: var(--accent); border-color: var(--accent); background: rgba(79,142,247,0.08); }
+
+  /* Responsive */
+  @media (max-width: 720px) {
+    .sidebar { width: 56px; }
+    .brand-logo, .brand-sub, .nav-item span, .sidebar-footer, .nav-label { display: none; }
+    .nav-item { justify-content: center; padding: 11px; }
+    .nav-item .badge { display: none; }
+    .main .topbar-sub { display: none; }
+    .input-zone, .output-zone { padding: 16px; }
+    .topbar { padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">Nexa<span>Consult</span></div>
+      <div class="brand-sub">AI Business Agent</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-label">Modules</div>
+      <div class="nav-item active" data-panel="research" onclick="switchPanel('research',this)">
+        <span class="icon">🔍</span><span>Pain Point Research</span>
+      </div>
+      <div class="nav-item" data-panel="website" onclick="switchPanel('website',this)">
+        <span class="icon">🌐</span><span>Website Brief</span>
+      </div>
+      <div class="nav-item" data-panel="advisory" onclick="switchPanel('advisory',this)">
+        <span class="icon">📊</span><span>Business Advisory</span>
+      </div>
+      <div class="nav-item" data-panel="outreach" onclick="switchPanel('outreach',this)">
+        <span class="icon">✉️</span><span>Client Outreach</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      Powered by Claude AI<br/>
+      <a href="#" onclick="showBrandModal()">✏️ Edit brand name</a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="topbar-title">Pain Point Research</div>
+        <div class="topbar-sub" id="topbar-sub">Analyze any company or industry to uncover business pain points</div>
+      </div>
+      <div class="status-dot"><div class="dot"></div> Agent Ready</div>
+    </div>
+
+    <div class="content">
+
+      <!-- RESEARCH PANEL -->
+      <div class="panel active" id="panel-research">
+        <div class="input-zone">
+          <div class="field-row">
+            <div class="field" style="flex:2">
+              <label>Company or Industry</label>
+              <input id="r-company" type="text" placeholder="e.g. D2C fashion brand, SaaS startup, Local restaurant chain…" />
+            </div>
+            <div class="field">
+              <label>Focus Area</label>
+              <select id="r-focus">
+                <option>All areas</option>
+                <option>Marketing & Growth</option>
+                <option>Operations</option>
+                <option>Customer Retention</option>
+                <option>Tech & Digital</option>
+                <option>Finance & Cash Flow</option>
+                <option>HR & Talent</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Depth</label>
+              <select id="r-depth">
+                <option>Standard Report</option>
+                <option>Deep Dive</option>
+                <option>Quick Scan</option>
+              </select>
+            </div>
+          </div>
+          <button class="run-btn" id="r-btn" onclick="runResearch()">
+            <span id="r-btn-icon">🔍</span> <span id="r-btn-text">Run Research</span>
+          </button>
+        </div>
+        <div class="history-bar" id="r-history">
+          <span class="history-label">Recent:</span>
+        </div>
+        <div class="output-zone" id="r-output">
+          <div class="output-empty">
+            <div class="big-icon">🔍</div>
+            <p>Enter a company name or industry above and run the agent to get a full pain point analysis report.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- WEBSITE BRIEF PANEL -->
+      <div class="panel" id="panel-website">
+        <div class="input-zone">
+          <div class="field-row">
+            <div class="field" style="flex:2">
+              <label>Client / Business Name</label>
+              <input id="w-name" type="text" placeholder="e.g. Arya Jewellers, TechFlow SaaS, Sunrise Clinic…" />
+            </div>
+            <div class="field">
+              <label>Industry</label>
+              <input id="w-industry" type="text" placeholder="e.g. Retail, Healthcare, SaaS…" />
+            </div>
+            <div class="field">
+              <label>Website Type</label>
+              <select id="w-type">
+                <option>Business / Brochure</option>
+                <option>E-commerce</option>
+                <option>Portfolio</option>
+                <option>Landing Page</option>
+                <option>SaaS Product</option>
+                <option>Blog / Content</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Key Goal / Pain Point</label>
+              <textarea id="w-goal" placeholder="e.g. No online presence, losing customers to competitors, want to showcase services…" rows="2"></textarea>
+            </div>
+          </div>
+          <button class="run-btn" id="w-btn" onclick="runWebsite()">
+            <span id="w-btn-icon">🌐</span> <span id="w-btn-text">Generate Website Brief</span>
+          </button>
+        </div>
+        <div class="history-bar" id="w-history">
+          <span class="history-label">Recent:</span>
+        </div>
+        <div class="output-zone" id="w-output">
+          <div class="output-empty">
+            <div class="big-icon">🌐</div>
+            <p>Fill in the client details above. The agent will produce a full website project brief, page structure, and tech recommendations.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADVISORY PANEL -->
+      <div class="panel" id="panel-advisory">
+        <div class="input-zone">
+          <div class="field-row">
+            <div class="field" style="flex:2">
+              <label>Business to Advise</label>
+              <input id="a-name" type="text" placeholder="e.g. Riya's Bakery, TechMart Store, ABC Logistics…" />
+            </div>
+            <div class="field">
+              <label>Business Stage</label>
+              <select id="a-stage">
+                <option>Early Stage / Startup</option>
+                <option>Growing (1–3 years)</option>
+                <option>Established (3+ years)</option>
+                <option>Scaling / Expansion</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Key Challenges (describe briefly)</label>
+              <textarea id="a-challenge" placeholder="e.g. Low footfall, not generating online leads, team retention issues, cash flow problems, unclear positioning…" rows="3"></textarea>
+            </div>
+          </div>
+          <button class="run-btn" id="a-btn" onclick="runAdvisory()">
+            <span id="a-btn-icon">📊</span> <span id="a-btn-text">Generate Advisory Report</span>
+          </button>
+        </div>
+        <div class="history-bar" id="a-history">
+          <span class="history-label">Recent:</span>
+        </div>
+        <div class="output-zone" id="a-output">
+          <div class="output-empty">
+            <div class="big-icon">📊</div>
+            <p>Describe your client's business and challenges. The agent will generate a strategic advisory report with actionable recommendations.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- OUTREACH PANEL -->
+      <div class="panel" id="panel-outreach">
+        <div class="input-zone">
+          <div class="field-row">
+            <div class="field">
+              <label>Prospect's Business</label>
+              <input id="o-prospect" type="text" placeholder="e.g. Raj's Hardware Store, ClearSky Clinic…" />
+            </div>
+            <div class="field">
+              <label>Their Industry</label>
+              <input id="o-industry" type="text" placeholder="e.g. Retail, Healthcare…" />
+            </div>
+            <div class="field">
+              <label>Outreach Type</label>
+              <select id="o-type">
+                <option>Cold Email</option>
+                <option>WhatsApp / SMS</option>
+                <option>LinkedIn Message</option>
+                <option>Proposal Letter</option>
+                <option>Follow-up Email</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>What service are you offering them?</label>
+              <textarea id="o-service" placeholder="e.g. Build their first website, improve their online presence, business advisory for expansion…" rows="2"></textarea>
+            </div>
+          </div>
+          <button class="run-btn" id="o-btn" onclick="runOutreach()">
+            <span id="o-btn-icon">✉️</span> <span id="o-btn-text">Draft Outreach</span>
+          </button>
+        </div>
+        <div class="history-bar" id="o-history">
+          <span class="history-label">Recent:</span>
+        </div>
+        <div class="output-zone" id="o-output">
+          <div class="output-empty">
+            <div class="big-icon">✉️</div>
+            <p>Enter the prospect's info and what you're offering. The agent will write a sharp, personalised outreach message for you.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Brand Modal -->
+<div id="brand-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;display:none;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:32px;width:340px;">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gold2);margin-bottom:16px;">Edit Brand Name</div>
+    <div class="field" style="margin-bottom:16px;">
+      <label>Your Consulting Company Name</label>
+      <input id="brand-input" type="text" placeholder="e.g. Apex Consulting, Growth Co…" />
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="run-btn" onclick="saveBrand()" style="flex:1">Save</button>
+      <button class="copy-btn" onclick="closeBrandModal()" style="flex:1;padding:11px;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let brandName = "NexaConsult";
+
+const panels = {
+  research: { title: "Pain Point Research", sub: "Analyze any company or industry to uncover business pain points" },
+  website:  { title: "Website Brief Generator", sub: "Create a full project brief for your client's website" },
+  advisory: { title: "Business Advisory Report", sub: "Generate strategic recommendations for any business" },
+  outreach: { title: "Client Outreach Drafts", sub: "Write personalised cold emails, proposals & follow-ups" },
+};
+
+function switchPanel(id, el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-' + id).classList.add('active');
+  document.getElementById('topbar-title').textContent = panels[id].title;
+  document.getElementById('topbar-sub').textContent = panels[id].sub;
+}
+
+function setLoading(btnId, iconId, textId, loading, label, icon) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  document.getElementById(iconId).textContent = loading ? '⏳' : icon;
+  document.getElementById(textId).textContent = loading ? 'Working…' : label;
+}
+
+function renderOutput(zoneId, title, meta, content) {
+  const zone = document.getElementById(zoneId);
+  zone.innerHTML = `
+    <div class="output-card">
+      <div class="output-header">
+        <div>
+          <div class="output-title">${title}</div>
+          <div class="output-meta">${meta} · ${new Date().toLocaleTimeString()}</div>
+        </div>
+        <button class="copy-btn" onclick="copyOutput('${zoneId}')">📋 Copy</button>
+      </div>
+      <div class="output-body" id="${zoneId}-body">${content}<span class="cursor"></span></div>
+    </div>`;
+}
+
+function streamInto(zoneId, title, meta, streamFn) {
+  renderOutput(zoneId, title, meta, '');
+  const body = document.getElementById(zoneId + '-body');
+  streamFn(body);
+}
+
+function copyOutput(zoneId) {
+  const body = document.getElementById(zoneId + '-body');
+  if (body) {
+    navigator.clipboard.writeText(body.innerText.replace('|',''));
+    alert('Copied to clipboard!');
+  }
+}
+
+function addHistory(historyId, label) {
+  const bar = document.getElementById(historyId);
+  const chip = document.createElement('div');
+  chip.className = 'history-chip';
+  chip.textContent = label;
+  bar.appendChild(chip);
+}
+
+function formatMarkdown(text) {
+  return text
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/^---$/gm, '<hr/>')
+    .replace(/^\* (.+)$/gm, '• $1')
+    .replace(/^- (.+)$/gm, '• $1');
+}
+
+async function callClaude(prompt) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1500,
+      system: `You are a senior business consultant and strategist working for ${brandName}, a consulting firm that builds websites and provides business advisory services. You write professional, insightful, and highly actionable reports. Format your responses with clear headings (##), bullet points, bold for key terms. Be specific, practical, and direct. Avoid generic advice.`,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  const data = await res.json();
+  return data.content?.[0]?.text || "Error: No response received.";
+}
+
+async function runResearch() {
+  const company = document.getElementById('r-company').value.trim();
+  const focus = document.getElementById('r-focus').value;
+  const depth = document.getElementById('r-depth').value;
+  if (!company) { alert('Please enter a company or industry name.'); return; }
+
+  setLoading('r-btn','r-btn-icon','r-btn-text',true,'Run Research','🔍');
+  renderOutput('r-output', `Pain Point Analysis: ${company}`, `${focus} · ${depth}`, '');
+  const body = document.getElementById('r-output-body');
+
+  const prompt = `Conduct a ${depth} pain point analysis for: "${company}"
+Focus area: ${focus}
+
+Produce a structured report with:
+## Executive Summary
+## Top 5–7 Business Pain Points (each with: symptom, root cause, business impact)
+## Hidden/Underrated Pain Points
+## Opportunities for Improvement
+## How a consulting firm could help (website, digital, advisory)
+## Recommended Next Steps
+
+Be specific to this type of business. Include real-world examples where relevant.`;
+
+  try {
+    const text = await callClaude(prompt);
+    body.innerHTML = formatMarkdown(text);
+    addHistory('r-history', company);
+  } catch(e) {
+    body.innerHTML = `<span style="color:var(--red)">Error: ${e.message}. Check your API connection.</span>`;
+  }
+  setLoading('r-btn','r-btn-icon','r-btn-text',false,'Run Research','🔍');
+}
+
+async function runWebsite() {
+  const name = document.getElementById('w-name').value.trim();
+  const industry = document.getElementById('w-industry').value.trim();
+  const type = document.getElementById('w-type').value;
+  const goal = document.getElementById('w-goal').value.trim();
+  if (!name) { alert('Please enter the client or business name.'); return; }
+
+  setLoading('w-btn','w-btn-icon','w-btn-text',true,'Generate Website Brief','🌐');
+  renderOutput('w-output', `Website Brief: ${name}`, `${type} · ${industry}`, '');
+  const body = document.getElementById('w-output-body');
+
+  const prompt = `Create a detailed website project brief for a client:
+Business: "${name}"
+Industry: ${industry || 'Not specified'}
+Website Type: ${type}
+Client's Goal / Pain Point: ${goal || 'General online presence'}
+
+Produce a complete brief with:
+## Project Overview
+## Business Objectives & Goals
+## Target Audience
+## Recommended Page Structure (list all pages with purpose)
+## Key Features & Functionality
+## Content Strategy (what content each page needs)
+## Tech Stack Recommendation (with reasoning)
+## Design Direction (mood, colours, fonts, tone)
+## Timeline Estimate (in weeks)
+## Budget Range (INR)
+## Questions to Ask the Client Before Starting
+
+Be specific and professional. This is a working document.`;
+
+  try {
+    const text = await callClaude(prompt);
+    body.innerHTML = formatMarkdown(text);
+    addHistory('w-history', name);
+  } catch(e) {
+    body.innerHTML = `<span style="color:var(--red)">Error: ${e.message}</span>`;
+  }
+  setLoading('w-btn','w-btn-icon','w-btn-text',false,'Generate Website Brief','🌐');
+}
+
+async function runAdvisory() {
+  const name = document.getElementById('a-name').value.trim();
+  const stage = document.getElementById('a-stage').value;
+  const challenge = document.getElementById('a-challenge').value.trim();
+  if (!name) { alert('Please enter the business name.'); return; }
+
+  setLoading('a-btn','a-btn-icon','a-btn-text',true,'Generate Advisory Report','📊');
+  renderOutput('a-output', `Advisory Report: ${name}`, `${stage}`, '');
+  const body = document.getElementById('a-output-body');
+
+  const prompt = `Generate a business advisory report for:
+Business: "${name}"
+Stage: ${stage}
+Challenges described: ${challenge || 'Not specified'}
+
+Structure as:
+## Business Snapshot & Assessment
+## Diagnosis: Core Problems
+## Strategic Recommendations (min 5, each with: what to do, why, how, expected outcome)
+## Quick Wins (actions in the next 30 days)
+## 90-Day Action Plan
+## KPIs to Track
+## Digital / Website Recommendation
+## Risks to Watch Out For
+
+Write as a senior consultant. Be specific, not generic. Tailor advice to Indian market context where relevant.`;
+
+  try {
+    const text = await callClaude(prompt);
+    body.innerHTML = formatMarkdown(text);
+    addHistory('a-history', name);
+  } catch(e) {
+    body.innerHTML = `<span style="color:var(--red)">Error: ${e.message}</span>`;
+  }
+  setLoading('a-btn','a-btn-icon','a-btn-text',false,'Generate Advisory Report','📊');
+}
+
+async function runOutreach() {
+  const prospect = document.getElementById('o-prospect').value.trim();
+  const industry = document.getElementById('o-industry').value.trim();
+  const type = document.getElementById('o-type').value;
+  const service = document.getElementById('o-service').value.trim();
+  if (!prospect) { alert('Please enter the prospect business name.'); return; }
+
+  setLoading('o-btn','o-btn-icon','o-btn-text',true,'Draft Outreach','✉️');
+  renderOutput('o-output', `${type}: ${prospect}`, `${industry}`, '');
+  const body = document.getElementById('o-output-body');
+
+  const prompt = `Write a ${type} for the following outreach scenario:
+Our company: ${brandName} (a consulting firm offering website development and business advisory)
+Prospect: "${prospect}"
+Their industry: ${industry || 'Not specified'}
+Service we're offering: ${service || 'Website development and business advisory'}
+
+Requirements:
+- Personalise it to their business type
+- Open with a relevant insight about their industry (not a compliment)
+- Clearly state the value we bring
+- Include a specific, low-friction CTA
+- Keep tone professional but warm — not salesy
+- Length appropriate for ${type}
+
+Also provide:
+## Subject Line (if email)
+## Main Message
+## Follow-up Note (what to send if no reply in 3 days)
+## Pro Tips for this outreach`;
+
+  try {
+    const text = await callClaude(prompt);
+    body.innerHTML = formatMarkdown(text);
+    addHistory('o-history', prospect);
+  } catch(e) {
+    body.innerHTML = `<span style="color:var(--red)">Error: ${e.message}</span>`;
+  }
+  setLoading('o-btn','o-btn-icon','o-btn-text',false,'Draft Outreach','✉️');
+}
+
+function showBrandModal() {
+  const modal = document.getElementById('brand-modal');
+  document.getElementById('brand-input').value = brandName;
+  modal.style.display = 'flex';
+}
+function closeBrandModal() {
+  document.getElementById('brand-modal').style.display = 'none';
+}
+function saveBrand() {
+  const val = document.getElementById('brand-input').value.trim();
+  if (val) {
+    brandName = val;
+    document.querySelector('.brand-logo').innerHTML = `${val.slice(0,Math.ceil(val.length/2))}<span>${val.slice(Math.ceil(val.length/2))}</span>`;
+  }
+  closeBrandModal();
+}
+</script>
+</body>
+</html>
